@@ -1,37 +1,47 @@
-DROP DATABASE IF exists cantina;
+DROP DATABASE IF EXISTS cantina;
 CREATE DATABASE cantina;
 USE cantina;
 
-CREATE TABLE produtos(
-	idProduto int,
-    nome char(200) NOT NULL,
-    categoria_preco int,
-    tipo_salgado char(20),
-    tipo_pagamento int
-);
+-- Create tables
 
 CREATE TABLE valorP(
-	idPrecos int,
-    cor char(30) unique,
-    valor float NOT NULL check (valor > 0)
+    idPrecos int AUTO_INCREMENT PRIMARY KEY,  -- Add auto increment to idPrecos
+    cor char(30) UNIQUE NOT NULL,  -- Make cor unique for proper foreign key referencing
+    valor float NOT NULL CHECK (valor > 0)
 );
 
 CREATE TABLE pagamento(
-	idPagamento int,
-	tipo_pagamento char(200) NOT NULL
+    idPagamento int AUTO_INCREMENT PRIMARY KEY,
+    tipo_pagamento char(200) NOT NULL
 );
 
-insert into valorP(idPrecos,cor, valor) 
-values (1, "Vermelho", 10.00),
-(2, "Azul", 4.50),
-(3, "Amarelo", 8.00);
+CREATE TABLE produtos(
+    idProduto int AUTO_INCREMENT PRIMARY KEY, 
+    nome char(200) NOT NULL,
+    categoria_cor char(30),  -- Reference to cor column in valorP
+    tipo_salgado char(20),
+    tipo_pagamento int,
+    FOREIGN KEY (categoria_cor) REFERENCES valorP(cor),  -- Foreign key reference to cor
+    FOREIGN KEY (tipo_pagamento) REFERENCES pagamento(idPagamento)  -- Reference to tipo_pagamento
+);
 
-insert into produtos(idProduto,nome, categoria_preco,tipo_salgado, tipo_pagamento) 
-values ( 1, "Enroladinho de presunto e queijo", 1, "assado", 1),
-(2,  "Esfirra de Frango", 2, "assado", 2),
-( 3, "kibe", 3, "frito", 3);
+-- Insert data into valorP
+INSERT INTO valorP(cor, valor) 
+VALUES 
+    ("Vermelho", 10.00),
+    ("Azul", 4.50),
+    ("Amarelo", 8.00);
 
-insert into pagamento(idPagamento,tipo_pagamento) 
-values (1, "Cartão Débito"),
-(2, "Cartão Crédito"),
-(3, "Pix");
+-- Insert data into pagamento
+INSERT INTO pagamento(tipo_pagamento) 
+VALUES 
+    ("Cartão Débito"),
+    ("Cartão Crédito"),
+    ("Pix");
+
+-- Insert data into produtos
+INSERT INTO produtos(nome, categoria_cor, tipo_salgado, tipo_pagamento) 
+VALUES 
+    ("Enroladinho de presunto e queijo", "Vermelho", "assado", 1),
+    ("Esfirra de Frango", "Azul", "assado", 2),
+    ("Kibe", "Amarelo", "frito", 3);
