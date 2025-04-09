@@ -2,7 +2,9 @@ DROP DATABASE IF exists empresa;
 CREATE DATABASE empresa;
 USE empresa;
 
--- TABELA FUNCIONARIO
+-- Criação da tabela FUNCIONARIO: correta
+-- Porém, a coluna DNUMERO é uma chave estrangeira, mas a tabela DEPARTAMENTO ainda não foi criada,
+-- então a restrição de chave estrangeira ainda não pode ser aplicada até a tabela DEPARTAMENTO existir
 CREATE TABLE FUNCIONARIO (
     CPF VARCHAR(11) NOT NULL PRIMARY KEY,
     NOME VARCHAR(50) NOT NULL,
@@ -19,7 +21,9 @@ CREATE TABLE FUNCIONARIO (
     DNUMERO INT CHECK (DNUMERO > 0)
 );
 
--- TABELA DEPARTAMENTO
+-- Criação da tabela DEPARTAMENTO: correta
+-- CPFGERENTE é uma FK para FUNCIONARIO, que já foi criada, então ok.
+-- Mas nesse momento ainda não há FUNCIONARIO inserido, então só será possível inserir valores NULL ou CPFs válidos depois
 CREATE TABLE DEPARTAMENTO (
 	DNUMERO INT NOT NULL,
 	DNOME VARCHAR(20) NOT NULL, 
@@ -29,12 +33,13 @@ CREATE TABLE DEPARTAMENTO (
 		REFERENCES FUNCIONARIO(CPF)
 );
 
--- CHAVE ESTRANGEIRA DNUMERO EM FUNCIONARIO
+-- ALTER TABLE para adicionar a FK de DNUMERO na tabela FUNCIONARIO: ok
 ALTER TABLE FUNCIONARIO
 	ADD FOREIGN KEY (DNUMERO)
 		REFERENCES DEPARTAMENTO(DNUMERO);
 		
--- TABELA PROJETO
+-- Criação das demais tabelas: todas corretas em estrutura e referências
+-- Nenhum erro aqui
 CREATE TABLE PROJETO (
 	PROJNUMERO INT NOT NULL AUTO_INCREMENT,
 	PROJNOME VARCHAR(20) NOT NULL,
@@ -44,8 +49,7 @@ CREATE TABLE PROJETO (
 	FOREIGN KEY (DNUMERO) 
 		REFERENCES DEPARTAMENTO(DNUMERO)
 );
-		
--- TABELA ATRIBUCAO (RELACIONAMENTO N:M TRABALHA_EM)
+
 CREATE TABLE ATRIBUICAO (
 	CPF VARCHAR(11) NOT NULL,
 	PROJNUMERO INT NOT NULL,
@@ -56,8 +60,7 @@ CREATE TABLE ATRIBUICAO (
 	FOREIGN KEY (PROJNUMERO) 
 		REFERENCES PROJETO(PROJNUMERO)
 );
-		
--- TABELA DEPTOLOCAL RESULTANTE DO MAPEAMENTO DE ATRIBUTO MULTIVALORADO
+
 CREATE TABLE DEPTOLOCAL (
 	DNUMERO INT NOT NULL,
 	NOMELOCAL VARCHAR(20) NOT NULL,
@@ -66,6 +69,9 @@ CREATE TABLE DEPTOLOCAL (
 		REFERENCES DEPARTAMENTO(DNUMERO)
 );	
 
+-- INSERÇÕES EM FUNCIONARIO: todas funcionam normalmente,
+-- porque o DNUMERO está ausente (NULL), e a FK permite isso.
+-- Valores estão consistentes com as restrições.
 INSERT INTO FUNCIONARIO 
 (CPF, NOME, SALARIO, DATANASC, RUA, NUMERO, COMPL, BAIRRO, CIDADE, ESTADO, CEP, SEXO)
 VALUES 
@@ -78,6 +84,7 @@ VALUES
 ('9879', 'André Pereira', 2500, '1969-03-29', 'Av. Timbira', 35, 'apto 23', 'Mooca', 'São Paulo', 'SP', '12345-000', 'M'),
 ('8886', 'Jorge Brito', 5500, '1937-11-10', 'Rua do Horto', 35, 'apto 501', 'Jardins', 'São Paulo', 'SP', '12345-500', 'M');
 
+-- INSERÇÕES EM DEPARTAMENTO: funcionam pois os CPFs usados como gerente já foram inseridos
 INSERT INTO DEPARTAMENTO (DNOME, DNUMERO, CPFGERENTE)
 VALUES
 ('Pesquisa', 5, '3334'),
@@ -92,7 +99,7 @@ VALUES
 (5, 'Itu'), 
 (5, 'Santo André'); 
 
--- INSERINDO PROJETOS
+-- PROJETO: inserções funcionam corretamente
 INSERT INTO PROJETO (PROJNOME, PROJLOCAL, DNUMERO)
 VALUES
 ('Produto X', 'Santo André', 5),
@@ -102,6 +109,7 @@ VALUES
 ('Reorganização', 'São Paulo', 1),
 ('Novos benefícios','Mauá', 4);
 
+-- ATRIBUICAO: inserções válidas com valores existentes
 INSERT INTO ATRIBUICAO (CPF, PROJNUMERO, HORAS)
 VALUES
 ('1234', 1, 5),
@@ -121,80 +129,75 @@ VALUES
 ('9876', 5, 1),
 ('8886', 5, 2);
 
--- ATRIBUINDO OS DEPARTAMENTOS DOS FUNCIONARIOS
-UPDATE FUNCIONARIO SET DNUMERO = 5 
-WHERE CPF = '1234';
-
-UPDATE FUNCIONARIO SET DNUMERO = 5
-WHERE CPF = '3334';
-
-UPDATE FUNCIONARIO SET DNUMERO = 4
-WHERE CPF = '9998';
-
-UPDATE FUNCIONARIO SET DNUMERO = 4
-WHERE CPF = '9876';
-
-UPDATE FUNCIONARIO SET DNUMERO = 5
-WHERE CPF = '6668';
-
-UPDATE FUNCIONARIO SET DNUMERO = 5
-WHERE CPF = '4534';
-
-UPDATE FUNCIONARIO SET DNUMERO = 4
-WHERE CPF = '9879';
-
-UPDATE FUNCIONARIO SET DNUMERO = 1
-WHERE CPF = '8886';
+-- UPDATEs válidos
+UPDATE FUNCIONARIO SET DNUMERO = 5 WHERE CPF = '1234';
+UPDATE FUNCIONARIO SET DNUMERO = 5 WHERE CPF = '3334';
+UPDATE FUNCIONARIO SET DNUMERO = 4 WHERE CPF = '9998';
+UPDATE FUNCIONARIO SET DNUMERO = 4 WHERE CPF = '9876';
+UPDATE FUNCIONARIO SET DNUMERO = 5 WHERE CPF = '6668';
+UPDATE FUNCIONARIO SET DNUMERO = 5 WHERE CPF = '4534';
+UPDATE FUNCIONARIO SET DNUMERO = 4 WHERE CPF = '9879';
+UPDATE FUNCIONARIO SET DNUMERO = 1 WHERE CPF = '8886';
 
 INSERT INTO FUNCIONARIO 
 (CPF, NOME, SALARIO, DATANASC, RUA, NUMERO, COMPL, BAIRRO, CIDADE, ESTADO, CEP, SEXO)
 VALUES 
-('999', 'Roberto Santos', 4500, '1972-06-21', 'Rua Benjamin', 34, NULL, 'Vila Maria', 'Santo André', 'SP', 1, 'M');
+('999', 'Roberto Santos', 4500, '1972-06-21', 'Rua Benjamin', 34, NULL, 'Vila Maria', 'Santo André', 'SP', '1', 'M');
 
--- Dando erro pois o DNUMERO está associado a outro departamento
+-- ERRO: DNUMERO = 1 já existe, tentativa de duplicar chave primária
 INSERT INTO DEPARTAMENTO (DNOME, DNUMERO)
 VALUES
 ('Producao', 1);
 
+-- FUNCIONA apenas se CPF '999' foi inserido com sucesso (o que provavelmente não aconteceu por erro no CEP acima)
 INSERT INTO DEPARTAMENTO (DNOME, DNUMERO, CPFGERENTE)
 VALUES
 ('Producao', 10, '999');
 
+-- ERRO: tentativa de apagar funcionário que está sendo referenciado como gerente em DEPARTAMENTO (CPFGERENTE)
+-- Isso viola a integridade referencial e falha, a menos que tenha sido definido ON DELETE CASCADE ou SET NULL (não foi)
 DELETE FROM FUNCIONARIO where CPF = '999';
 
+-- ERRO: DNUMERO 20 não existe em DEPARTAMENTO, portanto violação de chave estrangeira
 UPDATE FUNCIONARIO SET DNUMERO = 20 WHERE CPF = '999';
 
+-- FUNCIONA: departamentos 2 e 3 são novos
 INSERT INTO DEPARTAMENTO (DNOME, DNUMERO)
 VALUES
 ('Ensino', 2),
 ('RH', 3);
 
+-- FUNCIONA: atualizando CPFGERENTE com CPFs válidos
 UPDATE DEPARTAMENTO SET CPFGERENTE = '1234' WHERE DNUMERO = 2;
-
 UPDATE DEPARTAMENTO SET CPFGERENTE = '6668' WHERE DNUMERO = 3;
 
+-- ERRO: faltando o valor para a coluna HORAS (que é NOT NULL)
+-- Isso causa erro por tentar inserir NULL implicitamente
 INSERT INTO ATRIBUICAO(CPF, PROJNUMERO) 
 VALUES 
 ('1234', 1),
 ('9998', 1),
 ('9879', 1);
 
+-- FUNCIONA: atualização de salários de quem está no departamento 4
 UPDATE FUNCIONARIO SET SALARIO = SALARIO * 1.10 WHERE DNUMERO = 4;
 
--- Criar o departamento de Marketing (DNUMERO 7)
+-- FUNCIONA: criação do departamento Marketing
 INSERT INTO DEPARTAMENTO (DNUMERO, DNOME, CPFGERENTE)
 VALUES (7, 'Marketing', '6668');
 
--- Inserir o projeto Call Center (PROJNUMERO 7)
+-- FUNCIONA: criação do projeto Call Center
 INSERT INTO PROJETO (PROJNOME, PROJLOCAL, DNUMERO)
 VALUES ('Call Center', 'São Paulo', 7);
 
+-- FUNCIONA: inserção de locais do departamento 7
 INSERT INTO DEPTOLOCAL (DNUMERO, NOMELOCAL)
 VALUES
 (7, 'São Paulo'),
 (7, 'Rio de Janeiro'),
 (7, 'Campinas');
 
+-- FUNCIONA: inserção de novos funcionários para o departamento 7
 INSERT INTO FUNCIONARIO
 (CPF, NOME, SALARIO, DATANASC, RUA, NUMERO, COMPL, BAIRRO, CIDADE, ESTADO, CEP, SEXO, DNUMERO)
 VALUES
@@ -204,6 +207,7 @@ VALUES
 ('4444', 'Mariana Costa', 2800, '1992-11-05', 'Rua D', 400, 'Apto 202', 'Barra', 'Rio de Janeiro', 'RJ', '23000-000', 'F', 7),
 ('5555', 'Luiz Pereira', 3000, '1987-07-18', 'Rua E', 500, NULL, 'Centro', 'Campinas', 'SP', '13010-000', 'M', 7);
 
+-- FUNCIONA: atribuições válidas
 INSERT INTO ATRIBUICAO (CPF, PROJNUMERO, HORAS)
 VALUES
 ('1111', 7, 40),
@@ -211,26 +215,3 @@ VALUES
 ('3333', 7, 40),
 ('4444', 7, 40),
 ('5555', 7, 40);
-
-select * from FUNCIONARIO;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
