@@ -1,23 +1,38 @@
-DROP DATABASE IF exists CONTATOS;
-CREATE DATABASE CONTATOS;
-USE CONTATOS;
+Use pizzaria;
 
-CREATE TABLE contatos_primeiro(
-	idContatos int,
-    nome char(20),
-    celular char(20),
-    idCidade int,
-    classe char(20)
+UPDATE cliente
+SET rua = 'Rua Nova', numero = 200, compl = 'Casa', bairro = 'Jardins'
+WHERE telefone = '11912345678';
+
+DELETE FROM ingredientes_pizza
+WHERE cod_pizza = 'P01';
+
+SELECT * FROM pizza
+WHERE preco > 30 AND nome = 'Calabresa';
+
+SELECT nome, preco, preco * 1.10 AS preco_com_acrescimo
+FROM pizza;
+
+SELECT * FROM cliente
+ORDER BY nome ASC;
+
+SELECT * FROM cliente
+WHERE nome LIKE 'J%';
+
+SELECT * FROM cliente
+WHERE compl IS NULL;
+
+SELECT AVG(preco) AS media_preco_pizzas
+FROM pizza;
+
+SELECT nome
+FROM pizza
+WHERE preco = (SELECT MAX(preco) FROM pizza);
+
+SELECT nome
+FROM pizza
+WHERE codigo IN (
+  SELECT cod_pizza
+  FROM item_pedido
+  WHERE quantidade > 1
 );
-
-
-insert into contatos_primeiro(idContatos,nome, celular,idCidade,classe) values (1, "Eduardo", "1699158", 1, "IFSP");
-
-CREATE TABLE cidades(
-	idCidade int,
-    nome char(20),
-    uf char(20)
-);
-
-
-insert into cidades(idCidade,nome, uf) values (1, "Araraquara", "SP");
